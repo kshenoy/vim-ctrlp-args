@@ -5,7 +5,9 @@
 
 if (  &cp
  \ || (v:version < 700)
- \ || exists('g:loaded_ctrlp_args')
+ \ || (  exists('g:loaded_ctrlp_args')
+ \    && g:loaded_ctrlp_args
+ \    )
  \ )
   finish
 endif
@@ -18,23 +20,24 @@ let g:loaded_ctrlp_args = 1
 " accept        : the name of the action function (only the name)
 " lname & sname : the long and short names to use for the statusline
 " type          : the matching type
-" - line : match full line
-" - path : match full line like a file or a directory path
-" - tabs : match until first tab character
-" - tabe : match until last tab character
+"   - line      :   - full line
+"   - path      :   - full line like a file or a directory path
+"   - tabs      :   - until first tab character
+"   - tabe      :   - until last tab character
 "
 " Optional:
-" enter     : the name of the function to be called before starting ctrlp
-" exit      : the name of the function to be called after closing ctrlp
-" opts      : the name of the option handling function called when initialize
-" sort      : disable sorting (enabled by default when omitted)
-" specinput : enable special inputs '..' and '@cd' (disabled by default)
+" enter         : the name of the function to be called before starting ctrlp
+" exit          : the name of the function to be called after closing ctrlp
+" opts          : the name of the option handling function called when initialize
+" sort          : disable sorting (enabled by default when omitted)
+" specinput     : enable special inputs '..' and '@cd' (disabled by default)
+"
 call add(g:ctrlp_ext_vars, {
   \ 'init'      : 'ctrlp#args#init()',
   \ 'accept'    : 'ctrlp#args#accept',
   \ 'lname'     : 'Args',
   \ 'sname'     : 'Args',
-  \ 'type'      : 'line',
+  \ 'type'      : 'path',
   \ 'sort'      : 0
   \ })
 
@@ -44,6 +47,14 @@ function! ctrlp#args#id()
   return s:id
 endfunction
 
+function! s:get_args()                                                                                            " {{{1
+  return argv()
+endfunction
+
+function! ctrlp#args#init()                                                                                       " {{{1
+  return s:get_args()
+endfunction
+
 function! ctrlp#args#accept(mode, str)                                                                            " {{{1
   " Description: The action to perform on the selected string
   " Arguments:
@@ -51,22 +62,9 @@ function! ctrlp#args#accept(mode, str)                                          
   "         : The values are 'e', 'v', 't' and 'h', respectively
   "  a:str  : The selected string
 
-  " Jump to the args file
-  "echo "mode: " . a:mode . ", str: " . a:str
-  let l:arg_index = index(s:get_args(), a:str)
+  " echom "mode: " . a:mode . ", str: " . a:str
 
-  if (l:arg_index != -1)
-    let l:arg_index = l:arg_index + 1
-    execute "argument " . l:arg_index
-  endif
+  call ctrlp#acceptfile(a:mode, a:str)
 
   call ctrlp#exit()
-endfunction
-
-function! ctrlp#args#init()                                                                                       " {{{1
-  return s:get_args()
-endfunction
-
-function! s:get_args()
-  return argv()
 endfunction
